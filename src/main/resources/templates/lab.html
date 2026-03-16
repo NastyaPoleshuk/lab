@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>Изотермический процесс</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 500px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #000066; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #FFDDDD; color: black}
+        .result-box { margin-top: 25px; padding: 20px; border-radius: 8px; background-color: #FFDDDD; border-left: 5px solid #000066; }
+        .status { font-style: italic; color: #7f8c8d; margin-top: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Виртуальная лаборатория</h2>
+
+
+
+    <form th:action="@{/calculate}" th:object="${gasModel}" method="post">
+        <div class="form-group">
+            <label for="volume">Начальный объем (V), м³:</label>
+            <input id="volume" type="number" step="0.0001" th:field="*{Volume}" required />
+        </div>
+        <div class="form-group">
+            <label for="postvolume">Конечный объем (V), м³:</label>
+            <input id="postvolume" type="number" step="0.0001" th:field="*{PostVolume}" required />
+        </div>
+        <div class="form-group">
+            <label for="temp">Температура (T), K:</label>
+            <input id="temp" type="number" step="0.1" th:field="*{Temperature}" required />
+        </div>
+        <div class="form-group">
+            <label for="mass">Масса (m), кг:</label>
+            <input id="mass" type="number" step="0.001" th:field="*{Mass}" required />
+        </div>
+        <div class="form-group">
+            <label for="molar">Молярная масса (M), кг/моль:</label>
+            <input id="molar" type="number" step="0.0001" th:field="*{MolarMass}" required />
+        </div>
+
+        <button type="submit">Рассчитать давление</button>
+        <div style="text-align: center; font-weight: bold; margin-top: 30px;">
+            График изотермического процесса:
+        </div>
+        <div style="margin-top: 30px; background: white; padding: 10px; border-radius: 8px;">
+            <canvas id="isothermChart"></canvas>
+        </div>
+    </form>
+    <div th:if="${gasModel.IsValid}" class="result-box">
+        <h3>Результаты расчета:</h3>
+        <p>Давление (P):
+            <strong th:text="${#numbers.formatDecimal(gasModel.Pressure, 1, 2, 'POINT')}"></strong> Па
+        </p>
+        <p>Статус: <span th:text="${gasModel.ProcessInfo}"></span></p>
+    </div>
+</div>
+<script th:inline="javascript">
+    const currentP = /*[[${gasModel.Pressure}]]*/ 0;
+    const currentV = /*[[${gasModel.Volume}]]*/ 0;
+    const mass = /*[[${gasModel.Mass}]]*/ 0;
+    const molarMass = /*[[${gasModel.MolarMass}]]*/ 0;
+    const temp = /*[[${gasModel.Temperature}]]*/ 0;
+    const R = /*[[${T(com.example.lab.Constants).MOLAR_GAS_CONSTANT}]]*/ 8.31;
+    if (currentP > 0) {
+        const ctx = document.getElementById('isothermChart').getContext('2d');
+        const points = [];
+        for (let v = currentV * 0.5; v <= currentV * 2; v += currentV * 0.1) {
+            let p = (mass * R * temp) / (molarMass * v);
+            points.push({x: v.toFixed(4), y: p.toFixed(2)});
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Изотерма',
+                    data: points,
+                    borderColor: '#000066',
+                    tension: 0.4
+                }, {
+                    label: 'Текущая точка',
+                    data: [{x: currentV, y: currentP}],
+                    borderColor: '#FFDDDD',
+                    pointBackgroundColor: '#FFDDDD',
+                    pointRadius: 8
+                }]
+            },
+            options: {
+                scales: {
+                    x: { type: 'linear', title: { display: true, text: 'V (м³)' } },
+                    y: { title: { display: true, text: 'P (Па)' } }
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
