@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpSession;
 
 @Controller
 @SessionAttributes("gasModel")
@@ -57,13 +56,25 @@ public class LabController {
 
 
         gasModel.isValidEnter();
+        gasModel.checkProcessStatus();
         if (gasModel.IsValid) {
             gasModel.calculatedPressure();
             gasModel.calculatedPostPressure();
-            gasModel.checkProcessStatus();
             gasModel.addToHistory(gasModel.getPostVolume(), gasModel.getPostPressure());
         }
 
+        modelMap.addAttribute("gasModel", gasModel);
+        return "lab";
+    }
+    @PostMapping("/calculateError")
+    public String calculateError(@ModelAttribute("gasModel") Model gasModelFromForm,
+                                 jakarta.servlet.http.HttpSession session,
+                                 ModelMap modelMap) {
+        Model gasModel = (Model) session.getAttribute("gasModel");
+        if (gasModel != null) {
+            gasModel.setReliability(gasModelFromForm.getReliability());
+            gasModel.calculateError();
+        }
         modelMap.addAttribute("gasModel", gasModel);
         return "lab";
     }
