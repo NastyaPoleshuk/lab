@@ -47,60 +47,40 @@
         </div>
 
         <button type="submit">Рассчитать давление</button>
-        <div style="text-align: center; font-weight: bold; margin-top: 30px;">
-            График изотермического процесса:
-        </div>
-        <div style="margin-top: 30px; background: white; padding: 10px; border-radius: 8px;">
-            <canvas id="isothermChart"></canvas>
+        <div th:if="${gasModel.IsValid}" style="margin-top: 30px;">
+            <div style="text-align: center; font-weight: bold;">
+                График изотермического процесса:
+            </div>
+            <div style="background: white; padding: 10px; border-radius: 8px;">
+                <canvas id="isothermChart"></canvas>
+            </div>
         </div>
     </form>
     <div th:if="${gasModel.IsValid}" class="result-box">
         <h3>Результаты расчета:</h3>
-        <p>Давление (P):
+        <p>Начальное давление (P1):
             <strong th:text="${#numbers.formatDecimal(gasModel.Pressure, 1, 2, 'POINT')}"></strong> Па
+        </p>
+        <p>Конечное давление (P2):
+            <strong th:text="${#numbers.formatDecimal(gasModel.PostPressure, 1, 2, 'POINT')}"></strong> Па
         </p>
         <p>Статус: <span th:text="${gasModel.ProcessInfo}"></span></p>
     </div>
 </div>
 <script th:inline="javascript">
-    const currentP = /*[[${gasModel.Pressure}]]*/ 0;
-    const currentV = /*[[${gasModel.Volume}]]*/ 0;
-    const mass = /*[[${gasModel.Mass}]]*/ 0;
-    const molarMass = /*[[${gasModel.MolarMass}]]*/ 0;
-    const temp = /*[[${gasModel.Temperature}]]*/ 0;
-    const R = /*[[${T(com.example.lab.Constants).MOLAR_GAS_CONSTANT}]]*/ 8.31;
-    if (currentP > 0) {
-        const ctx = document.getElementById('isothermChart').getContext('2d');
-        const points = [];
-        for (let v = currentV * 0.5; v <= currentV * 2; v += currentV * 0.1) {
-            let p = (mass * R * temp) / (molarMass * v);
-            points.push({x: v.toFixed(4), y: p.toFixed(2)});
-        }
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [{
-                    label: 'Изотерма',
-                    data: points,
-                    borderColor: '#000066',
-                    tension: 0.4
-                }, {
-                    label: 'Текущая точка',
-                    data: [{x: currentV, y: currentP}],
-                    borderColor: '#FFDDDD',
-                    pointBackgroundColor: '#FFDDDD',
-                    pointRadius: 8
-                }]
-            },
-            options: {
-                scales: {
-                    x: { type: 'linear', title: { display: true, text: 'V (м³)' } },
-                    y: { title: { display: true, text: 'P (Па)' } }
-                }
-            }
-        });
-    }
+    window.gasData = {
+        currentP: /*[[${gasModel.Pressure}]]*/ 0,
+        currentV: /*[[${gasModel.Volume}]]*/ 0,
+        postP: /*[[${gasModel.PostPressure}]]*/ 0,
+        postV: /*[[${gasModel.PostVolume}]]*/ 0,
+        mass: /*[[${gasModel.Mass}]]*/ 0,
+        molarMass: /*[[${gasModel.MolarMass}]]*/ 0,
+        temp: /*[[${gasModel.Temperature}]]*/ 0,
+        R: /*[[${T(com.example.lab.Constants).MOLAR_GAS_CONSTANT}]]*/ 8.31
+    };
 </script>
+
+<script th:src="@{/js/isotherm-logic.js}"></script>
+<script th:src="@{/js/mychart.js}"></script>
 </body>
 </html>

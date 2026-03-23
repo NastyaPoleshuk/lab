@@ -9,15 +9,15 @@ import static java.lang.Math.abs;
 @Setter
 @Getter
 public class Model {
-    public double Volume;
-    public double Pressure;
     public double Temperature;
     public double Mass;
     public double MolarMass;
     public boolean IsValid;
     public String ProcessInfo;
     public double PostVolume;
-    public double PostPressure;
+    public double PostPressure;   public double Volume;
+    public double Pressure;
+
     public void isValidEnter() {
         IsValid = Volume > 0 && MolarMass > 0 && Mass >= 0 && Temperature > 0;
     }
@@ -34,7 +34,7 @@ public class Model {
         double MolarGasConstant = Constants.MOLAR_GAS_CONSTANT;
         if (IsValid) {
             this.Pressure = (this.Mass * MolarGasConstant * this.Temperature) / (this.MolarMass * this.Volume);
-            this.PostPressure = (this.Mass * MolarGasConstant * this.Temperature) / (this.MolarMass * this.PostVolume);
+            this.Pressure = Math.round(this.Pressure * 100.0) / 100.0;
         }
     }
 
@@ -42,6 +42,7 @@ public class Model {
         double MolarGasConstant = Constants.MOLAR_GAS_CONSTANT;
         if (IsValid) {
             this.PostPressure = (this.Mass * MolarGasConstant * this.Temperature) / (this.MolarMass * this.PostVolume);
+            this.PostPressure = Math.round(this.PostPressure * 100.0) / 100.0;
         }
     }
 
