@@ -3,6 +3,8 @@ package com.example.lab;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.List;
 import static java.lang.Math.abs;
 
 @Slf4j
@@ -46,9 +48,16 @@ public class Model {
         }
     }
 
-
-    public static void main(String[] args) {
-        log.info("Lab simulation start");
-        Model model = new Model();
+    private List<Result> history = new ArrayList<>();
+    public boolean isSameExperiment(double newMass, double newMolarMass, double newTemp) {
+        return Double.compare(this.Mass, newMass) == 0 &&
+                Double.compare(this.MolarMass, newMolarMass) == 0 &&
+                Double.compare(this.Temperature, newTemp) == 0;
+    }
+    public void addToHistory(double v, double p) {
+        this.history.add(new Result(v, p));
+    }
+    public void clearHistory() {
+        this.history.clear();
     }
 }
