@@ -83,6 +83,18 @@
             </tr>
             </tbody>
         </table>
+        <form th:action="@{/calculateError}" th:object="${gasModel}" method="post" style="margin-top: 20px;">
+
+            <div class="form-group">
+                <label for="reliability">Выберите доверительную вероятность (P):</label>
+                <select id="reliability" th:field="*{reliability}"
+                        style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 16px; margin-bottom: 10px;">
+                    <option th:each="rel : ${T(com.example.lab.Model.Reliability).values()}"
+                            th:value="${rel}"
+                            th:text="${rel.value}"></option>
+                </select>
+            </div>
+        </form>
         <form th:action="@{/calculateError}" method="post" style="margin-top: 20px;">
             <button type="submit"
                     style="background-color: #000066; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%;">

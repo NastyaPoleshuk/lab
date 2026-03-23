@@ -67,8 +67,15 @@ public class LabController {
         return "lab";
     }
     @PostMapping("/calculateError")
-    public String calculateError(@ModelAttribute("gasModel") Model gasModel) {
-        gasModel.calculateError();
+    public String calculateError(@ModelAttribute("gasModel") Model gasModelFromForm,
+                                 jakarta.servlet.http.HttpSession session,
+                                 ModelMap modelMap) {
+        Model gasModel = (Model) session.getAttribute("gasModel");
+        if (gasModel != null) {
+            gasModel.setReliability(gasModelFromForm.getReliability());
+            gasModel.calculateError();
+        }
+        modelMap.addAttribute("gasModel", gasModel);
         return "lab";
     }
 }
