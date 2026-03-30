@@ -1,6 +1,7 @@
 package com.example.lab.controller;
 
 import com.example.lab.Model;
+import com.example.lab.Errors;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @SessionAttributes("gasModel")
@@ -20,7 +22,7 @@ public class LabController {
         model.setMass(1.0);
         model.setMolarMass(1.0);
         model.setVolume(1.0);
-        model.setPostVolume(1.0);
+        model.setPostVolume(2.0);
         return model;
     }
     @GetMapping("/")
@@ -67,12 +69,16 @@ public class LabController {
         return "lab";
     }
     @PostMapping("/calculateError")
-    public String calculateError(@ModelAttribute("gasModel") Model gasModelFromForm,
-                                 jakarta.servlet.http.HttpSession session,
+    public String calculateError(@RequestParam String reliability,
+                                 HttpSession session,
                                  ModelMap modelMap) {
         Model gasModel = (Model) session.getAttribute("gasModel");
+        if (gasModel == null) {
+            return "redirect:/";
+        }
         if (gasModel != null) {
-            gasModel.setReliability(gasModelFromForm.getReliability());
+            Errors.Reliability selected = Errors.Reliability.valueOf(reliability);
+            gasModel.getErrorCalculator().setReliability(selected);
             gasModel.calculateError();
         }
         modelMap.addAttribute("gasModel", gasModel);

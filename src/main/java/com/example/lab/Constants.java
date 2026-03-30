@@ -13,4 +13,7 @@ public class Constants {
             {0.71, 0.89, 1.1, 1.4, 1.9, 2.3, 5.0},
             {0.70, 0.88, 1.1, 1.4, 1.8, 2.3, 4.8}
     };
+    public static final double MASS_ERROR = 0.005;
+    public static final double VOLUME_ERROR = 0.005;
+    public static final double TEMPERATURE_ERROR = 0.05;
 }
