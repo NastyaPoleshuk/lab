@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,15 +15,12 @@
         button { width: 100%; padding: 12px; background-color: #000066; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
         button:hover { background-color: #FFDDDD; color: black}
         .result-box { margin-top: 25px; padding: 20px; border-radius: 8px; background-color: #FFDDDD; border-left: 5px solid #000066; }
-        .status { font-style: italic; color: #7f8c8d; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Виртуальная лаборатория</h2>
-
-
 
     <form th:action="@{/calculate}" th:object="${gasModel}" method="post">
         <div class="form-group">
@@ -56,50 +54,70 @@
             </div>
         </div>
     </form>
-    <div th:if="${gasModel.IsValid}" class="result-box">
-        <h3>Результаты расчета:</h3>
-        <p>Начальное давление (P1):
-            <strong th:text="${#numbers.formatDecimal(gasModel.Pressure, 1, 2, 'POINT')}"></strong> Па
-        </p>
-        <p>Конечное давление (P2):
-            <strong th:text="${#numbers.formatDecimal(gasModel.PostPressure, 1, 2, 'POINT')}"></strong> Па
-        </p>
-        <p>Статус: <span th:text="${gasModel.ProcessInfo}"></span></p>
+    <div class="result-box">
+        <div th:if="${gasModel.IsValid}">
+            <h3>Результаты расчета:</h3>
+            <p>Начальное давление (P1):
+                <strong th:text="${#numbers.formatDecimal(gasModel.Pressure, 1, 2, 'POINT')}"></strong> Па
+            </p>
+            <p>Конечное давление (P2):
+                <strong th:text="${#numbers.formatDecimal(gasModel.PostPressure, 1, 2, 'POINT')}"></strong> Па
+            </p>
+        </div>
+            <p>Статус: <span th:text="${gasModel.ProcessInfo}"></span></p>
     </div>
-    <div th:if="${not #lists.isEmpty(gasModel.history)}" class="result-box" style="margin-top: 20px; background-color: #f9f9f9; border-left: 5px solid #000066;">
+    <div th:if="${not #lists.isEmpty(gasModel.errorCalculator.history)}" class="result-box" style="margin-top: 20px; background-color: #f9f9f9; border-left: 5px solid #000066;">
         <h3 style="color: #000066;">Журнал опытов (T = const)</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
             <thead>
-            <tr style="background-color: #eee; text-align: left;">
-                <th style="padding: 8px; border: 1px solid #ddd;">№</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">V (м³)</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">P (Па)</th>
-            </tr>
+                <tr style="background-color: #eee; text-align: left;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">№</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">V (м³)</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">P (Па)</th>
+                </tr>
             </thead>
             <tbody>
-            <tr th:each="res, iter : ${gasModel.history}">
+            <tr th:each="res, iter : ${gasModel.errorCalculator.history}">
                 <td style="padding: 8px; border: 1px solid #ddd;" th:text="${iter.count}"></td>
                 <td style="padding: 8px; border: 1px solid #ddd;" th:text="${res.finalVolume}"></td>
                 <td style="padding: 8px; border: 1px solid #ddd;" th:text="${res.finalPressure}"></td>
             </tr>
             </tbody>
         </table>
+        <form th:action="@{/calculateError}" method="post" style="margin-top: 20px;">
+            <div class="form-group">
+                <label for="reliability">Выберите доверительную вероятность (P):</label>
+                <select id="reliability" name="reliability" class="form-control">
+                    <option th:each="rel : ${T(com.example.lab.Errors.Reliability).values()}"
+                            th:value="${rel}"
+                            th:text="${rel.value}"
+                            th:selected="${rel == gasModel.errorCalculator.reliability}">
+                    </option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                Рассчитать погрешность
+            </button>
+        </form>
+        <div style="margin-top: 15px; padding: 10px; border-left: 5px solid #000066; background: #FFDDDD;">
+            <p>Итоговая погрешность объёма (ΔV):
+                <strong th:text="${gasModel.errorCalculator.finalVolumeError}">0.0</strong> м³
+            </p>
+        </div>
     </div>
 </div>
-<script th:inline="javascript">
-    window.gasData = {
-        currentP: /*[[${gasModel.Pressure}]]*/ 0,
-        currentV: /*[[${gasModel.Volume}]]*/ 0,
-        postP: /*[[${gasModel.PostPressure}]]*/ 0,
-        postV: /*[[${gasModel.PostVolume}]]*/ 0,
-        mass: /*[[${gasModel.Mass}]]*/ 0,
-        molarMass: /*[[${gasModel.MolarMass}]]*/ 0,
-        temp: /*[[${gasModel.Temperature}]]*/ 0,
-        R: /*[[${T(com.example.lab.Constants).MOLAR_GAS_CONSTANT}]]*/ 8.31
-    };
-</script>
 
-<script th:src="@{/js/isotherm-logic.js}"></script>
-<script th:src="@{/js/mychart.js}"></script>
+<div id="gas-data-bridge"
+     th:data-p="${gasModel.Pressure}"
+     th:data-v="${gasModel.Volume}"
+     th:data-post-p="${gasModel.PostPressure}"
+     th:data-post-v="${gasModel.PostVolume}"
+     th:data-mass="${gasModel.Mass}"
+     th:data-molar="${gasModel.MolarMass}"
+     th:data-temp="${gasModel.Temperature}"
+     style="display: none;">
+</div>
+
+<script th:src="@{/mychart.js}"></script>
 </body>
 </html>

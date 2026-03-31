@@ -3,9 +3,6 @@ package com.example.lab;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import java.util.ArrayList;
-import java.util.List;
-import static java.lang.Math.abs;
 
 @Slf4j
 @Setter
@@ -17,18 +14,32 @@ public class Model {
     public boolean IsValid;
     public String ProcessInfo;
     public double PostVolume;
-    public double PostPressure;   public double Volume;
+    public double PostPressure;
+    public double Volume;
     public double Pressure;
-
     public void isValidEnter() {
-        IsValid = Volume > 0 && MolarMass > 0 && Mass >= 0 && Temperature > 0;
+        IsValid = Volume > 0 && MolarMass > 0 && Mass > 0 && Temperature > 0;
     }
-
+    private Errors errorCalculator = new Errors();
+    public void addToHistory(double v, double p) {
+        errorCalculator.addToHistory(v, p);
+    }
+    public void clearHistory() {
+        errorCalculator.clearHistory();
+    }
+    public boolean isSameExperiment(double m, double mm, double t) {
+        return Double.compare(this.Mass, m) == 0 &&
+                Double.compare(this.MolarMass, mm) == 0 &&
+                Double.compare(this.Temperature, t) == 0;
+    }
+    public void calculateError() {
+        errorCalculator.calculateError();
+    }
     public void checkProcessStatus() {
         if (IsValid) {
             ProcessInfo = "Изотермический процесс стабилен (T = const)";
         } else {
-            ProcessInfo = "Ошибка: Некорректные параметры системы";
+            ProcessInfo = "Некорректные параметры";
         }
     }
 
@@ -46,18 +57,5 @@ public class Model {
             this.PostPressure = (this.Mass * MolarGasConstant * this.Temperature) / (this.MolarMass * this.PostVolume);
             this.PostPressure = Math.round(this.PostPressure * 100.0) / 100.0;
         }
-    }
-
-    private List<Result> history = new ArrayList<>();
-    public boolean isSameExperiment(double newMass, double newMolarMass, double newTemp) {
-        return Double.compare(this.Mass, newMass) == 0 &&
-                Double.compare(this.MolarMass, newMolarMass) == 0 &&
-                Double.compare(this.Temperature, newTemp) == 0;
-    }
-    public void addToHistory(double v, double p) {
-        this.history.add(new Result(v, p));
-    }
-    public void clearHistory() {
-        this.history.clear();
     }
 }
