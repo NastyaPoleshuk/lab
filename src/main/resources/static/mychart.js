@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
         temp: parseFloat(bridge.dataset.temp),
         R: 8.31
     };
+
     const canvas = document.getElementById('isothermChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
