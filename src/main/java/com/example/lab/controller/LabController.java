@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
-
 @Controller
 @SessionAttributes("gasModel")
 public class LabController {
@@ -23,7 +22,7 @@ public class LabController {
         model.setMass(1.0);
         model.setMolarMass(1.0);
         model.setVolume(1.0);
-        model.setPostVolume(2.0);
+        model.setPostVolume(1.0);
         return model;
     }
     @GetMapping("/")
@@ -33,6 +32,7 @@ public class LabController {
 
     @PostMapping("/calculate")
     public String calculate(
+            @RequestParam(required = false) String gasName,
             @RequestParam double Mass,
             @RequestParam double MolarMass,
             @RequestParam double Temperature,
@@ -46,43 +46,44 @@ public class LabController {
             gasModel = gasModel();
         }
 
-
         if (!gasModel.isSameExperiment(Mass, MolarMass, Temperature)) {
             gasModel.clearHistory();
         }
 
         gasModel.setMass(Mass);
-        gasModel.setMolarMass(MolarMass);
         gasModel.setTemperature(Temperature);
+        gasModel.setMolarMass(MolarMass);
         gasModel.setVolume(Volume);
         gasModel.setPostVolume(PostVolume);
 
+        if (gasName != null && !gasName.isEmpty()) {
+            gasModel.updateGasData(gasName);
+        }
 
         gasModel.isValidEnter();
-        gasModel.checkProcessStatus();
         if (gasModel.IsValid) {
             gasModel.calculatedPressure();
             gasModel.calculatedPostPressure();
+            gasModel.checkProcessStatus();
             gasModel.addToHistory(gasModel.getPostVolume(), gasModel.getPostPressure());
+            gasModel.getErrors().calculateError();
         }
 
         modelMap.addAttribute("gasModel", gasModel);
         return "lab";
     }
-    @PostMapping("/calculateError")
-    public String calculateError(@RequestParam String reliability,
-                                 HttpSession session,
-                                 ModelMap modelMap) {
+    @PostMapping("/clear")
+    public String clear(@ModelAttribute("gasModel") Model gasModel) {
+        gasModel.clearHistory();
+        return "redirect:/";
+    }
+    @PostMapping("/updateReliability")
+    public String updateReliability(@RequestParam String reliability, HttpSession session) {
         Model gasModel = (Model) session.getAttribute("gasModel");
-        if (gasModel == null) {
-            return "redirect:/";
-        }
         if (gasModel != null) {
-            Errors.Reliability selected = Errors.Reliability.valueOf(reliability);
-            gasModel.getErrorCalculator().setReliability(selected);
-            gasModel.calculateError();
+            gasModel.getErrors().setReliability(Errors.Reliability.valueOf(reliability));
+            gasModel.getErrors().calculateError();
         }
-        modelMap.addAttribute("gasModel", gasModel);
-        return "lab";
+        return "redirect:/";
     }
 }

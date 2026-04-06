@@ -1,50 +1,89 @@
+let isothermChart;
+
 document.addEventListener("DOMContentLoaded", function() {
+    const data = window.gasData;
 
-    const bridge = document.getElementById('gas-data-bridge');
-    if (!bridge) return;
-    const data = {
-        currentP: parseFloat(bridge.dataset.p),
-        currentV: parseFloat(bridge.dataset.v),
-        postP: parseFloat(bridge.dataset.postP),
-        postV: parseFloat(bridge.dataset.postV),
-        mass: parseFloat(bridge.dataset.mass),
-        molarMass: parseFloat(bridge.dataset.molar),
-        temp: parseFloat(bridge.dataset.temp),
-        R: 8.31
-    };
-
+    const v2Slider = document.getElementById('v2_slider');
+    const v2Display = document.getElementById('v2_display');
+    const v2InputHidden = document.getElementById('v2_input');
+    const gasFill = document.getElementById('gas-fill');
     const canvas = document.getElementById('isothermChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
 
-    const processPoints = [];
+    if (data && data.currentP > 0 && canvas) {
+        const ctx = canvas.getContext('2d');
+
+        isothermChart = createChart(ctx, data);
+
+        function syncAll(value) {
+            const val = parseFloat(value);
+
+            if (v2Display) v2Display.textContent = val.toFixed(2);
+            if (v2InputHidden) v2InputHidden.value = val.toFixed(2);
+
+            if (gasFill) {
+                const maxSliderV = 250; // Должно совпадать с max в HTML
+                const heightPercent = (val / maxSliderV) * 100;
+                gasFill.style.height = Math.min(heightPercent, 100) + "%";
+            }
+
+            const newP2 = (data.mass * data.R * data.temp) / (data.molarMass * val);
+
+            updateChartPoint(val, newP2);
+        }
+
+        if (v2Slider) {
+            v2Slider.addEventListener('input', function() {
+                syncAll(this.value);
+            });
+            syncAll(v2Slider.value);
+        }
+    }
+});
+
+function createChart(ctx, data) {
+    const curvePoints = [];
+
+    // 1. Определяем границы графика на основе введенных данных
+    // Используем Math.min/max на случай, если газ расширяется или сжимается
+    const startV = Math.min(data.currentV, data.postV);
+    const endV = Math.max(data.currentV, data.postV);
+
+    // 2. Генерируем точки только внутри этого диапазона
+    // Чем меньше шаг (например, / 50), тем плавнее будет линия
     const steps = 50;
-
-    const startV = data.currentV;
-    const endV = data.postV;
+    const stepSize = (endV - startV) / steps;
 
     for (let i = 0; i <= steps; i++) {
-        let v = startV + (endV - startV) * (i / steps);
+        let v = startV + (i * stepSize);
+        if (v <= 0) v = 0.1; // Защита от деления на ноль, если вдруг ввели 0
+
         let p = (data.mass * data.R * data.temp) / (data.molarMass * v);
-        processPoints.push({
-            x: v.toFixed(4),
-            y: p.toFixed(2)
-        });
+        curvePoints.push({ x: v, y: p });
     }
-    new Chart(ctx, {
+
+    return new Chart(ctx, {
         type: 'line',
         data: {
-            datasets: [{
-                label: 'Изотермический процесс (T=' + data.temp + 'K)',
-                data: processPoints,
-                borderColor: '#000066',
-                backgroundColor: 'rgba(0, 0, 102, 0.1)',
-                borderWidth: 3,
-                pointRadius: 0,
-                pointHitRadius: 10,
-                tension: 0.4,
-                fill: true
-            }]
+            datasets: [
+                {
+                    label: 'Изотермический процесс',
+                    data: curvePoints,
+                    borderColor: '#000066',
+                    borderWidth: 3, // Сделаем линию чуть толще для видимости
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Текущее состояние',
+                    data: [{ x: data.postV, y: data.postP }],
+                    backgroundColor: '#ff4d4d',
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    showLine: false
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -52,37 +91,29 @@ document.addEventListener("DOMContentLoaded", function() {
             scales: {
                 x: {
                     type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Объем V (м³)',
-                        color: '#2c3e50',
-                        font: { weight: 'bold' }
-                    },
-                    grid: { color: '#ecf0f1' }
+                    title: { display: true, text: 'Объем V (м³)', font: { weight: 'bold' } },
+                    // 3. Настраиваем оси, чтобы они тоже подстраивались под диапазон
+                    // Добавим небольшой отступ (10%), чтобы график не прилипал к краям
+                    min: startV * 0.9,
+                    max: endV * 1.1
                 },
                 y: {
-                    title: {
-                        display: true,
-                        text: 'Давление P (Па)',
-                        color: '#2c3e50',
-                        font: { weight: 'bold' }
-                    },
-                    grid: { color: '#ecf0f1' }
+                    type: 'linear',
+                    title: { display: true, text: 'Давление P (Па)', font: { weight: 'bold' } },
+                    beginAtZero: false // На графике процесса лучше видеть перепад давления крупно
                 }
             },
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `V: ${context.parsed.x} м³, P: ${context.parsed.y} Па`;
-                        }
-                    }
-                }
-            }
+                legend: { display: false }
+            },
+            animation: { duration: 0 }
         }
     });
-});
+}
+
+function updateChartPoint(v, p) {
+    if (isothermChart) {
+        isothermChart.data.datasets[1].data = [{ x: v, y: p }];
+        isothermChart.update('none');
+    }
+}

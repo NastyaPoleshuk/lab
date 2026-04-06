@@ -10,6 +10,9 @@ import lombok.Setter;
 @Setter
 
 public class Errors {
+
+    private double finalVolumeError = 0.0;
+
     public enum Reliability {
         P05(0, 0.5),
         P06(1, 0.6),
@@ -60,8 +63,7 @@ public class Errors {
             sumSquaredDiff += diff * diff;
         }
         double tCoefficient = getCoefficient();
-        this.finalVolumeError = tCoefficient * Math.sqrt(sumSquaredDiff / (1.0 * n * (n - 1)));
+        this.finalVolumeError = tCoefficient * Math.sqrt(sumSquaredDiff / ( n * (n - 1)));
         this.finalVolumeError = Math.round(this.finalVolumeError * 100.0) / 100.0;
     }
-    private double finalVolumeError = 0.0;
 }
