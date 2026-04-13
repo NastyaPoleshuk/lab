@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (v2InputHidden) v2InputHidden.value = val.toFixed(2);
 
             if (gasFill) {
-                const maxSliderV = 250; // Должно совпадать с max в HTML
+                const maxSliderV = 250;
                 const heightPercent = (val / maxSliderV) * 100;
                 gasFill.style.height = Math.min(heightPercent, 100) + "%";
             }
@@ -69,7 +69,7 @@ function createChart(ctx, data) {
                     label: 'Изотермический процесс',
                     data: curvePoints,
                     borderColor: '#000066',
-                    borderWidth: 3, // Сделаем линию чуть толще для видимости
+                    borderWidth: 3,
                     pointRadius: 0,
                     fill: false,
                     tension: 0.4
@@ -92,15 +92,13 @@ function createChart(ctx, data) {
                 x: {
                     type: 'linear',
                     title: { display: true, text: 'Объем V (м³)', font: { weight: 'bold' } },
-                    // 3. Настраиваем оси, чтобы они тоже подстраивались под диапазон
-                    // Добавим небольшой отступ (10%), чтобы график не прилипал к краям
                     min: startV * 0.9,
                     max: endV * 1.1
                 },
                 y: {
                     type: 'linear',
                     title: { display: true, text: 'Давление P (Па)', font: { weight: 'bold' } },
-                    beginAtZero: false // На графике процесса лучше видеть перепад давления крупно
+                    beginAtZero: false
                 }
             },
             plugins: {
