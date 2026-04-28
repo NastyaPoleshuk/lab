@@ -67,6 +67,8 @@ public class LabController {
             gasModel.checkProcessStatus();
             gasModel.addToHistory(gasModel.getPostVolume(), gasModel.getPostPressure());
             gasModel.getErrors().calculateError();
+            double pError = gasModel.calculatePressureError();
+            modelMap.addAttribute("pressureError", pError);
         }
 
         modelMap.addAttribute("gasModel", gasModel);
@@ -78,12 +80,16 @@ public class LabController {
         return "redirect:/";
     }
     @PostMapping("/updateReliability")
-    public String updateReliability(@RequestParam String reliability, HttpSession session) {
+    public String updateReliability(@RequestParam String reliability, HttpSession session, ModelMap modelMap) {
         Model gasModel = (Model) session.getAttribute("gasModel");
         if (gasModel != null) {
             gasModel.getErrors().setReliability(Errors.Reliability.valueOf(reliability));
             gasModel.getErrors().calculateError();
+            double pError = gasModel.calculatePressureError();
+            gasModel.setPressureError(pError);
+            modelMap.addAttribute("pressureError", pError);
+            modelMap.addAttribute("gasModel", gasModel);
         }
-        return "redirect:/";
+        return "lab";
     }
 }

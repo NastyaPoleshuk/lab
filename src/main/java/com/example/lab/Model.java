@@ -19,6 +19,7 @@ public class Model {
     public double PostPressure;
     public double Volume;
     public double Pressure;
+    private double pressureError;
 
     public void isValidEnter() {
         IsValid = Volume > 0 && MolarMass > 0 && Mass >= 0 && Temperature > 0 && PostVolume > 0;
@@ -38,22 +39,18 @@ public class Model {
             case "Азот" -> this.MolarMass = 0.028;
             case "Воздух" -> this.MolarMass = 0.029;
             case "Гелий" -> this.MolarMass = 0.004;
-            default -> this.MolarMass = 1.0;
+            case "Другой газ" -> this.MolarMass = 1;
         }
     }
 
     public void updateGasData(String gasName) {
-        setGasType(gasName);
-        if (this.Mass > 0 && this.Temperature > 0) {
-            double P1 = 101325.0;
-            this.Volume = (this.Mass * Constants.MOLAR_GAS_CONSTANT * this.Temperature) / (this.MolarMass * P1);
-            this.Volume = Math.round(this.Volume * 100.0) / 100.0;
-            if (this.PostVolume == 0 || this.PostVolume == 1.0) {
-                this.PostVolume = this.Volume;
-            }
+        if (gasName != null && !gasName.isEmpty() && !gasName.equals("Другой газ")) {
+            setGasType(gasName);
         }
     }
-
+    public boolean isCustomMolarMass() {
+        return MolarMass != 0.029 && MolarMass != 0.032 && MolarMass != 0.028 && MolarMass != 0.004;
+    }
     public void calculatedPressure() {
         double MolarGasConstant = Constants.MOLAR_GAS_CONSTANT;
         if (IsValid && this.Volume > 0) {
@@ -87,5 +84,14 @@ public class Model {
     public void clearHistory() {
         this.history.clear();
         this.errors.clearHistory();
+    }
+    public double calculatePressureError() {
+        return this.errors.calculatePressureError(
+                this.Mass,
+                this.Temperature,
+                this.PostVolume,
+                this.PostPressure,
+                this.errors.getFinalVolumeError()
+        );
     }
 }

@@ -3,6 +3,8 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Лабораторная работа: Изотерма</title>
     <style>
         body {
@@ -102,18 +104,18 @@
             <h3 style="margin-top: 0;">Параметры</h3>
 
             <div class="form-group"> <label>Выберите газ:</label>
-                <select name="gasName" onchange="this.form.submit()" class="custom-select">
+                <select name="gasName" id="gasSelect" onchange="this.form.submit()" class="custom-select">
                     <option value="Воздух" th:selected="${gasModel.MolarMass == 0.029}">Воздух</option>
                     <option value="Кислород" th:selected="${gasModel.MolarMass == 0.032}">Кислород (O₂)</option>
                     <option value="Азот" th:selected="${gasModel.MolarMass == 0.028}">Азот (N₂)</option>
                     <option value="Гелий" th:selected="${gasModel.MolarMass == 0.004}">Гелий (He)</option>
-                    <option value="" th:selected="${gasModel.MolarMass == 0.029}">Другой газ</option>
+                    <option value="Другой газ" th:selected="${gasModel.isCustomMolarMass()}">Другой газ</option>
                 </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="molarMassGroup">
                 <label>Молярная масса (кг/моль):</label>
-                <input type="number" name="MolarMass" th:value="${gasModel.MolarMass}">
+                <input type="number" step="0.001" name="MolarMass" id="molarMassInput" th:value="${gasModel.MolarMass}">
             </div>
 
             <div class="form-group">
@@ -152,7 +154,7 @@
                     </div>
 
                     <div style="height: 300px; margin-left: 20px;">
-                        <input type="range" id="v2_slider" name="PostVolume" min="0" max="250" step="1"
+                        <input type="range" id="v2_slider" name="PostVolume" min="0" max="250" step="0.01"
                                th:value="${gasModel.PostVolume}"
                                style="writing-mode: vertical-lr; direction: rtl; height: 100%; width: 10px; padding: 0; margin: 0; cursor: pointer;">
                     </div>
@@ -188,6 +190,9 @@
                 </form>
                 <div style="margin-left: auto; font-weight: bold;">
                     Погрешность ΔV: <span th:text="${gasModel.errors.finalVolumeError}">0.0</span> м³
+                </div>
+                <div style="margin-left: auto; font-weight: bold;">
+                    <p>Расчетная погрешность давления: <span th:text="${pressureError}">0.0</span> Па</p>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -236,6 +241,22 @@
             v2Input.value = parseFloat(this.value).toFixed(2);
         };
     }
+</script>
+<script>
+    function updateMolarMassState() {
+        const select = document.getElementById('gasSelect');
+        const input = document.getElementById('molarMassInput');
+
+        if (select.value === 'Другой газ') {
+            input.readOnly = false;
+            input.style.backgroundColor = "#fff";
+        } else {
+            input.readOnly = true;
+            input.style.backgroundColor = "#e9ecef";
+        }
+    }
+    document.addEventListener('DOMContentLoaded', updateMolarMassState);
+    document.getElementById('gasSelect').addEventListener('change', updateMolarMassState);
 </script>
 </body>
 </html>

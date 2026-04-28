@@ -43,19 +43,15 @@ document.addEventListener("DOMContentLoaded", function() {
 function createChart(ctx, data) {
     const curvePoints = [];
 
-    // 1. Определяем границы графика на основе введенных данных
-    // Используем Math.min/max на случай, если газ расширяется или сжимается
     const startV = Math.min(data.currentV, data.postV);
     const endV = Math.max(data.currentV, data.postV);
 
-    // 2. Генерируем точки только внутри этого диапазона
-    // Чем меньше шаг (например, / 50), тем плавнее будет линия
     const steps = 50;
     const stepSize = (endV - startV) / steps;
 
     for (let i = 0; i <= steps; i++) {
         let v = startV + (i * stepSize);
-        if (v <= 0) v = 0.1; // Защита от деления на ноль, если вдруг ввели 0
+        if (v <= 0) v = 0.1;
 
         let p = (data.mass * data.R * data.temp) / (data.molarMass * v);
         curvePoints.push({ x: v, y: p });

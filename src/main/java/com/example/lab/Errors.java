@@ -66,4 +66,17 @@ public class Errors {
         this.finalVolumeError = tCoefficient * Math.sqrt(sumSquaredDiff / ( n * (n - 1)));
         this.finalVolumeError = Math.round(this.finalVolumeError * 100.0) / 100.0;
     }
+    public double calculatePressureError(double mass, double temp, double volume, double pressure, double statVolumeError) {
+        if (volume <= 0 || mass <= 0 || temp <= 0) {
+            return 0.0;
+        }
+        double relMass = Constants.MASS_ERROR / mass;
+        double relTemp = Constants.TEMPERATURE_ERROR / temp;
+        double instrumentRelVolume = Constants.VOLUME_ERROR / volume;
+        double statRelVolume = statVolumeError / volume;
+        double relVolume = Math.sqrt(Math.pow(instrumentRelVolume, 2) + Math.pow(statRelVolume, 2));
+        double relativeTotal = Math.sqrt(Math.pow(relMass, 2) + Math.pow(relTemp, 2) + Math.pow(relVolume, 2));
+        double absoluteError = pressure * relativeTotal;
+        return Math.round(absoluteError * 100.0) / 100.0;
+    }
 }
