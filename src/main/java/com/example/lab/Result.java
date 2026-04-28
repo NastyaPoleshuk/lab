@@ -1,5 +1,6 @@
 package com.example.lab;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 @Getter
