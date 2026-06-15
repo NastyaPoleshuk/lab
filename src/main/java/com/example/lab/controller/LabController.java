@@ -1,6 +1,7 @@
 package com.example.lab.controller;
 
 import com.example.lab.Model;
+import com.example.lab.Errors;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ public class LabController {
 
     @PostMapping("/calculate")
     public String calculate(
+            @RequestParam(required = false) String gasName,
             @RequestParam double Mass,
             @RequestParam double MolarMass,
             @RequestParam double Temperature,
@@ -44,17 +46,19 @@ public class LabController {
             gasModel = gasModel();
         }
 
-
         if (!gasModel.isSameExperiment(Mass, MolarMass, Temperature)) {
             gasModel.clearHistory();
         }
 
         gasModel.setMass(Mass);
-        gasModel.setMolarMass(MolarMass);
         gasModel.setTemperature(Temperature);
+        gasModel.setMolarMass(MolarMass);
         gasModel.setVolume(Volume);
         gasModel.setPostVolume(PostVolume);
 
+        if (gasName != null && !gasName.isEmpty()) {
+            gasModel.updateGasData(gasName);
+        }
 
         gasModel.isValidEnter();
         if (gasModel.IsValid) {
@@ -62,9 +66,30 @@ public class LabController {
             gasModel.calculatedPostPressure();
             gasModel.checkProcessStatus();
             gasModel.addToHistory(gasModel.getPostVolume(), gasModel.getPostPressure());
+            gasModel.getErrors().calculateError();
+            double pError = gasModel.calculatePressureError();
+            modelMap.addAttribute("pressureError", pError);
         }
 
         modelMap.addAttribute("gasModel", gasModel);
+        return "lab";
+    }
+    @PostMapping("/clear")
+    public String clear(@ModelAttribute("gasModel") Model gasModel) {
+        gasModel.clearHistory();
+        return "redirect:/";
+    }
+    @PostMapping("/updateReliability")
+    public String updateReliability(@RequestParam String reliability, HttpSession session, ModelMap modelMap) {
+        Model gasModel = (Model) session.getAttribute("gasModel");
+        if (gasModel != null) {
+            gasModel.getErrors().setReliability(Errors.Reliability.valueOf(reliability));
+            gasModel.getErrors().calculateError();
+            double pError = gasModel.calculatePressureError();
+            gasModel.setPressureError(pError);
+            modelMap.addAttribute("pressureError", pError);
+            modelMap.addAttribute("gasModel", gasModel);
+        }
         return "lab";
     }
 }
